@@ -1,0 +1,15 @@
+java_version: 17
+ollama:
+  base_url: "http://localhost:11434"
+  model: "qwen2.5-coder:7b"
+  embed_model: "nomic-embed-text"
+  timeout_seconds: 120
+rag:
+  top_k: 5
+  chunk_token_threshold: 1000
+  max_input_tokens: 3000
+  max_history_turns: 6
+storage:
+  index_dir: "~/.java_qa_agent/indexes"
+  log_dir: "~/.java_qa_agent/logs"
+  save_logs: true

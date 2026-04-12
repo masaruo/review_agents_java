@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.java_qa_agent/
+*.log
