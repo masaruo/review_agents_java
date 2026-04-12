@@ -7,7 +7,7 @@ ollama:
 rag:
   top_k: 5
   chunk_token_threshold: 1000
-  max_embed_tokens: 2048
+  max_embed_tokens: 768
   chunk_overlap: 200
   max_input_tokens: 3000
   max_history_turns: 6
