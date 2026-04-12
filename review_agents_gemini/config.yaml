@@ -1,0 +1,12 @@
+java_version: 17
+ollama:
+  base_url: "http://localhost:11434"
+  model: "qwen2.5-coder:7b"
+  timeout_seconds: 120
+processing:
+  max_concurrency: 1
+  chunk_token_threshold: 1000
+  max_input_tokens: 3000
+  response_reserve_tokens: 1000
+output:
+  dir: "./review_output"

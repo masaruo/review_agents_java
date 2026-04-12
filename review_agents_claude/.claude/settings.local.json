@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ':*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3 -m venv .venv)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(sed -i '' 's/from datetime import datetime/from datetime import datetime, timezone/' /Users/mogawa/Documents/code/agent/ds_agents/review_agents_claude/java-review-agent/src/java_review_agent/agents/preprocessor.py /Users/mogawa/Documents/code/agent/ds_agents/review_agents_claude/java-review-agent/src/java_review_agent/agents/base.py)",
+      "Bash(sed -i '' 's/datetime.utcnow\\(\\)/datetime.now\\(timezone.utc\\)/g' /Users/mogawa/Documents/code/agent/ds_agents/review_agents_claude/java-review-agent/src/java_review_agent/agents/preprocessor.py /Users/mogawa/Documents/code/agent/ds_agents/review_agents_claude/java-review-agent/src/java_review_agent/agents/base.py)",
+      "Bash(make help:*)",
+      "Bash(make sync:*)",
+      "Bash(make test:*)"
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+# 環境変数
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+
+# テストキャッシュ
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# 出力ディレクトリ（サンプル以外は除外）
+review_output/*.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
