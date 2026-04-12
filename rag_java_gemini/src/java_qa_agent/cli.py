@@ -51,6 +51,11 @@ def index(
         )
         raise typer.Exit(1)
 
+    # Initialize logger for system logs
+    logger = SessionLogger(
+        config.storage.log_dir, project, enabled=config.storage.save_logs
+    )
+
     pm.register_project(project, str(project_path))
 
     with console.status(f"[bold green]Scanning files in {project_path}..."):
@@ -64,7 +69,10 @@ def index(
     console.print(f"Found {len(files)} Java files.")
 
     with console.status("[bold green]Chunking and Embedding..."):
-        chunker = Chunker(threshold=config.rag.chunk_token_threshold)
+        chunker = Chunker(
+            threshold=config.rag.chunk_token_threshold,
+            max_chars=config.rag.max_chunk_chars,
+        )
         embedder = OllamaEmbed(config.ollama)
         retriever = Retriever(config.storage.index_dir, project)
 
@@ -79,10 +87,24 @@ def index(
 
         # Batch embedding
         batch_size = 10
+        embedded_count = 0
         for i in range(0, len(all_chunks), batch_size):
             batch = all_chunks[i : i + batch_size]
             embeddings = embedder.embed_batch([c.content for c in batch])
-            retriever.add_chunks(batch, embeddings)
+            
+            # Filter out chunks with failed embeddings
+            valid_batch = []
+            valid_embeddings = []
+            for c, e in zip(batch, embeddings):
+                if e:
+                    valid_batch.append(c)
+                    valid_embeddings.append(e)
+            
+            if valid_batch:
+                retriever.add_chunks(valid_batch, valid_embeddings)
+                embedded_count += len(valid_batch)
+    
+    console.print(f"Indexed [bold green]{embedded_count}/{len(all_chunks)}[/bold green] chunks.")
 
     pm.update_indexed_at(project)
     console.print(

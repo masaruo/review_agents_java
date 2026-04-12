@@ -69,14 +69,58 @@ class JavaChunker:
         re.MULTILINE,
     )
 
-    def __init__(self, token_threshold: int = 1000) -> None:
+    def __init__(
+        self,
+        token_threshold: int = 1000,
+        max_embed_tokens: int = 2048,
+        chunk_overlap: int = 200,
+    ) -> None:
         """初期化
 
         Args:
             token_threshold: このトークン数未満はファイル全体を1チャンクとして扱う
+            max_embed_tokens: エンベディングモデルのコンテキスト上限
+            chunk_overlap: スライディングウィンドウ分割時のオーバーラップトークン数
         """
         self.token_threshold = token_threshold
+        self.max_embed_tokens = max_embed_tokens
+        self.chunk_overlap = chunk_overlap
         self._encoding = tiktoken.get_encoding("cl100k_base")
+
+    def _split_if_needed(self, content: str, metadata: ChunkMetadata) -> list[JavaChunk]:
+        """チャンクがmax_embed_tokensを超える場合、スライディングウィンドウで分割する
+
+        超えない場合はそのまま1件のリストを返す。
+
+        Args:
+            content: チャンクのテキスト
+            metadata: チャンクのメタデータ
+
+        Returns:
+            JavaChunkのリスト（通常は1件、大きい場合は複数件）
+        """
+        tokens = self._encoding.encode(content)
+        if len(tokens) <= self.max_embed_tokens:
+            return [JavaChunk(content=content, metadata=metadata, token_count=len(tokens))]
+
+        step = self.max_embed_tokens - self.chunk_overlap
+        result: list[JavaChunk] = []
+        start = 0
+        while start < len(tokens):
+            end = min(start + self.max_embed_tokens, len(tokens))
+            window_tokens = tokens[start:end]
+            window_content = self._encoding.decode(window_tokens)
+            result.append(
+                JavaChunk(
+                    content=window_content,
+                    metadata=metadata,
+                    token_count=len(window_tokens),
+                )
+            )
+            if end == len(tokens):
+                break
+            start += step
+        return result
 
     def count_tokens(self, text: str) -> int:
         """テキストのトークン数を計算する
@@ -217,13 +261,7 @@ class JavaChunker:
                 member_vars=member_vars,
                 chunk_type="file",
             )
-            return [
-                JavaChunk(
-                    content=source,
-                    metadata=metadata,
-                    token_count=token_count,
-                )
-            ]
+            return self._split_if_needed(source, metadata)
 
         # メソッド単位に分割する
         methods = self._extract_methods(source)
@@ -239,19 +277,10 @@ class JavaChunker:
                 member_vars=member_vars,
                 chunk_type="file",
             )
-            return [
-                JavaChunk(
-                    content=source,
-                    metadata=metadata,
-                    token_count=token_count,
-                )
-            ]
+            return self._split_if_needed(source, metadata)
 
         chunks: list[JavaChunk] = []
         for method_name, start, end in methods:
-            method_content = source[start:end]
-            method_token_count = self.count_tokens(method_content)
-
             metadata = ChunkMetadata(
                 file_path=file_path,
                 class_name=class_name,
@@ -261,13 +290,7 @@ class JavaChunker:
                 member_vars=member_vars,
                 chunk_type="method",
             )
-            chunks.append(
-                JavaChunk(
-                    content=method_content,
-                    metadata=metadata,
-                    token_count=method_token_count,
-                )
-            )
+            chunks.extend(self._split_if_needed(source[start:end], metadata))
 
         return chunks
 
@@ -285,6 +308,8 @@ class Indexer:
         embedder: EmbeddingBackend,
         index_base_dir: str = "~/.java_qa_agent/indexes",
         token_threshold: int = 1000,
+        max_embed_tokens: int = 2048,
+        chunk_overlap: int = 200,
     ) -> None:
         """初期化
 
@@ -292,11 +317,17 @@ class Indexer:
             embedder: エンベディングバックエンド
             index_base_dir: インデックス保存ディレクトリのベースパス
             token_threshold: チャンキングのトークンしきい値
+            max_embed_tokens: エンベディングモデルのコンテキスト上限
+            chunk_overlap: スライディングウィンドウ分割時のオーバーラップトークン数
         """
         self.embedder = embedder
         self.index_base_dir = Path(index_base_dir).expanduser()
         self.scanner = FileScanner()
-        self.chunker = JavaChunker(token_threshold=token_threshold)
+        self.chunker = JavaChunker(
+            token_threshold=token_threshold,
+            max_embed_tokens=max_embed_tokens,
+            chunk_overlap=chunk_overlap,
+        )
 
     def _get_index_dir(self, project_name: str) -> Path:
         """プロジェクトのインデックスディレクトリパスを返す"""

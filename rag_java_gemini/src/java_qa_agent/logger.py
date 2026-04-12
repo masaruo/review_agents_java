@@ -1,3 +1,5 @@
+import logging
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -12,6 +14,19 @@ class SessionLogger:
                 self.log_path
                 / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
             )
+            self._setup_standard_logging()
+
+    def _setup_standard_logging(self):
+        # Setup standard logging to file
+        log_file = self.log_path / "system.log"
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            handlers=[
+                logging.FileHandler(log_file),
+                # We don't want to spam the CLI with logs, so we don't add StreamHandler here
+            ],
+        )
 
     def log_interaction(self, user_msg: str, assistant_msg: str) -> None:
         if not self.enabled:

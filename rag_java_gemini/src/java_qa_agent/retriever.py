@@ -17,9 +17,17 @@ class Retriever:
     def add_chunks(
         self, chunks: List[JavaChunk], embeddings: List[List[float]]
     ) -> None:
+        if not chunks:
+            return
+            
         documents = [c.content for c in chunks]
         metadatas = [c.metadata.model_dump() for c in chunks]
-        ids = [f"{c.metadata.file_path}_{i}" for i, c in enumerate(chunks)]
+        # Use a combination of file path and index/hash to ensure uniqueness
+        import hashlib
+        ids = []
+        for c in chunks:
+            content_hash = hashlib.md5(c.content.encode()).hexdigest()[:8]
+            ids.append(f"{c.metadata.file_path}_{content_hash}")
 
         self.collection.add(
             documents=documents, embeddings=embeddings, metadatas=metadatas, ids=ids

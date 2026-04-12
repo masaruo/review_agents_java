@@ -55,6 +55,7 @@ make index project=<name> path=<dir>
     各ファイルをパース
     ├─ トークン数 < chunk_token_threshold (1000) → ファイル全体を1チャンク
     └─ トークン数 >= chunk_token_threshold      → メソッド単位に分割
+    max_embed_tokens (2048) を超えるチャンクはスライディングウィンドウで分割（overlap=200）
     メタデータ付与: imports, class_signature, member_vars
          │
          ▼

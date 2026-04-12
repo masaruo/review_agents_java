@@ -111,6 +111,8 @@ def index(
         embedder=embedder,
         index_base_dir=config.storage.index_dir,
         token_threshold=config.rag.chunk_token_threshold,
+        max_embed_tokens=config.rag.max_embed_tokens,
+        chunk_overlap=config.rag.chunk_overlap,
     )
 
     print(f"プロジェクト '{project}' のインデックスを構築中...")

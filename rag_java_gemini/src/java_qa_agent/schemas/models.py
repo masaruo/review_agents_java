@@ -13,6 +13,7 @@ class OllamaConfig(BaseModel):
 class RagConfig(BaseModel):
     top_k: int = 5
     chunk_token_threshold: int = 1000
+    max_chunk_chars: int = 6000
     max_input_tokens: int = 3000
     max_history_turns: int = 6
 

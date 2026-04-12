@@ -19,6 +19,8 @@ class RagConfig(BaseModel):
 
     top_k: int = 5
     chunk_token_threshold: int = 1000
+    max_embed_tokens: int = 2048
+    chunk_overlap: int = 200
     max_input_tokens: int = 3000
     max_history_turns: int = 6
 

@@ -147,6 +147,88 @@ class TestFileChunking:
         assert chunks[0].metadata.chunk_type == "file"
 
 
+class TestSlidingWindowSplit:
+    """_split_if_needed のスライディングウィンドウ分割テスト"""
+
+    def _make_metadata(self) -> object:
+        from java_qa_agent.schemas.models import ChunkMetadata
+
+        return ChunkMetadata(
+            file_path="/tmp/Test.java",
+            class_name="Test",
+            chunk_type="method",
+        )
+
+    def test_within_limit_returns_single_chunk(self) -> None:
+        """max_embed_tokens以内のテキストは1チャンクそのまま返す"""
+        chunker = JavaChunker(max_embed_tokens=200, chunk_overlap=20)
+        metadata = self._make_metadata()
+        content = "public void hello() { System.out.println(\"hi\"); }"
+        result = chunker._split_if_needed(content, metadata)  # type: ignore[arg-type]
+        assert len(result) == 1
+        assert result[0].content == content
+
+    def test_exceeds_limit_returns_multiple_chunks(self) -> None:
+        """max_embed_tokensを超えるテキストは複数チャンクに分割される"""
+        chunker = JavaChunker(max_embed_tokens=50, chunk_overlap=10)
+        metadata = self._make_metadata()
+        # 50トークンを確実に超えるテキスト（英単語を大量に並べる）
+        content = " ".join(["word"] * 200)
+        result = chunker._split_if_needed(content, metadata)  # type: ignore[arg-type]
+        assert len(result) > 1
+
+    def test_all_chunks_within_limit(self) -> None:
+        """分割後の全チャンクがmax_embed_tokens以内であることを確認する"""
+        chunker = JavaChunker(max_embed_tokens=50, chunk_overlap=10)
+        metadata = self._make_metadata()
+        content = " ".join(["word"] * 200)
+        result = chunker._split_if_needed(content, metadata)  # type: ignore[arg-type]
+        for chunk in result:
+            assert chunk.token_count <= 50
+
+    def test_overlap_between_consecutive_chunks(self) -> None:
+        """連続するチャンク間にオーバーラップが存在することを確認する"""
+        chunker = JavaChunker(max_embed_tokens=50, chunk_overlap=10)
+        metadata = self._make_metadata()
+        content = " ".join([f"word{i}" for i in range(200)])
+        result = chunker._split_if_needed(content, metadata)  # type: ignore[arg-type]
+        assert len(result) >= 2
+        # chunk_1の末尾テキストがchunk_2の先頭に含まれる
+        end_of_first = result[0].content[-20:]
+        assert end_of_first in result[1].content
+
+    def test_last_chunk_contains_end_of_content(self) -> None:
+        """最後のチャンクがテキストの末尾を含むことを確認する"""
+        chunker = JavaChunker(max_embed_tokens=50, chunk_overlap=10)
+        metadata = self._make_metadata()
+        last_word = "ENDOFCONTENT"
+        content = " ".join(["word"] * 200) + f" {last_word}"
+        result = chunker._split_if_needed(content, metadata)  # type: ignore[arg-type]
+        assert last_word in result[-1].content
+
+    def test_metadata_preserved_in_all_chunks(self) -> None:
+        """分割後の全チャンクにメタデータが引き継がれることを確認する"""
+        chunker = JavaChunker(max_embed_tokens=50, chunk_overlap=10)
+        metadata = self._make_metadata()
+        content = " ".join(["word"] * 200)
+        result = chunker._split_if_needed(content, metadata)  # type: ignore[arg-type]
+        for chunk in result:
+            assert chunk.metadata.class_name == "Test"
+            assert chunk.metadata.chunk_type == "method"
+
+    def test_token_count_matches_content(self) -> None:
+        """各チャンクのtoken_countがcontentのトークン数と一致することを確認する"""
+        import tiktoken
+
+        chunker = JavaChunker(max_embed_tokens=50, chunk_overlap=10)
+        metadata = self._make_metadata()
+        content = " ".join(["word"] * 200)
+        result = chunker._split_if_needed(content, metadata)  # type: ignore[arg-type]
+        enc = tiktoken.get_encoding("cl100k_base")
+        for chunk in result:
+            assert chunk.token_count == len(enc.encode(chunk.content))
+
+
 class TestEdgeCases:
     def test_large_file_split_by_method(self) -> None:
         """大きいファイルがメソッド単位に分割されることを確認する"""

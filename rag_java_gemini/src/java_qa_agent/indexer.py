@@ -17,53 +17,85 @@ class FileScanner:
 
 
 class Chunker:
-    def __init__(self, threshold: int = 1000):
+    def __init__(self, threshold: int = 1000, max_chars: int = 6000):
         self.threshold = threshold
+        self.max_chars = max_chars
 
     def chunk(self, file_path: str, content: str) -> List[JavaChunk]:
         # Approximate token count by word count
         approx_tokens = len(content.split())
-
         imports, sig, members = self._extract_context(content)
-
-        if approx_tokens < self.threshold:
-            return [
-                JavaChunk(
-                    content=content,
-                    metadata=JavaChunkMetadata(
-                        file_path=file_path,
-                        imports=imports,
-                        class_signature=sig,
-                        member_variables=members,
-                        chunk_type="full_file",
-                    ),
-                )
-            ]
-
-        # Split by method (very simple regex)
-        # Matches typical method declarations: [public|private|protected] [static] [final] <T> name(...) {
-        methods = re.split(
-            r"\n\s*(?:public|private|protected|static|\s)+\s+[\w<>[\]]+\s+\w+\s*\([^)]*\)\s*\{",
-            content,
+        metadata = JavaChunkMetadata(
+            file_path=file_path,
+            imports=imports,
+            class_signature=sig,
+            member_variables=members,
+            chunk_type="full_file",
         )
 
-        chunks = []
-        # First part is usually class header/members
-        for m in methods:
-            if not m.strip():
+        if approx_tokens < self.threshold and len(content) < self.max_chars:
+            return [JavaChunk(content=content, metadata=metadata)]
+
+        # Split by method (improved regex)
+        # Matches typical method declarations including annotations and generics
+        # Look for: [Annotations] [Modifiers] <Generics> ReturnType Name([Args]) [throws ...] {
+        method_pattern = r"\n\s*(?:(?:@[\w\d(.,\s)]+)\s*)*(?:(?:public|private|protected|static|final|native|synchronized|abstract|transient|volatile|strictfp)\s+)*[\w<>[\]]+\s+\w+\s*\([^)]*\)\s*(?:throws\s+[\w\d.,\s]+)?\s*\{"
+        
+        parts = re.split(f"({method_pattern})", content)
+        
+        raw_chunks = []
+        if len(parts) > 1:
+            # First part is class header
+            header = parts[0].strip()
+            if header:
+                raw_chunks.append((header, "header"))
+            
+            # parts[1::2] are the matched patterns (method signatures)
+            # parts[2::2] are the contents between matches
+            for i in range(1, len(parts), 2):
+                sig_part = parts[i]
+                body_part = parts[i+1] if i+1 < len(parts) else ""
+                raw_chunks.append((sig_part + body_part, "method"))
+        else:
+            raw_chunks.append((content, "full_file"))
+
+        final_chunks = []
+        for text, ctype in raw_chunks:
+            text = text.strip()
+            if not text:
                 continue
-            chunks.append(
-                JavaChunk(
-                    content=m.strip(),
-                    metadata=JavaChunkMetadata(
-                        file_path=file_path,
-                        imports=imports,
-                        class_signature=sig,
-                        member_variables=members,
-                        chunk_type="method",
-                    ),
-                )
-            )
+            
+            if len(text) > self.max_chars:
+                # Recursive fallback for very large chunks
+                final_chunks.extend(self._recursive_split(text, metadata, ctype))
+            else:
+                chunk_metadata = metadata.model_copy()
+                chunk_metadata.chunk_type = ctype
+                final_chunks.append(JavaChunk(content=text, metadata=chunk_metadata))
+        
+        return final_chunks
+
+    def _recursive_split(self, text: str, base_metadata: JavaChunkMetadata, original_type: str) -> List[JavaChunk]:
+        chunks = []
+        # Split by roughly max_chars, trying to break at newlines
+        start = 0
+        while start < len(text):
+            end = start + self.max_chars
+            if end >= len(text):
+                chunk_text = text[start:]
+                start = len(text)
+            else:
+                # Try to find last newline before max_chars
+                last_newline = text.rfind("\n", start, end)
+                if last_newline != -1 and last_newline > start + (self.max_chars // 2):
+                    end = last_newline
+                chunk_text = text[start:end].strip()
+                start = end
+            
+            if chunk_text:
+                metadata = base_metadata.model_copy()
+                metadata.chunk_type = f"{original_type}_split"
+                chunks.append(JavaChunk(content=chunk_text, metadata=metadata))
         return chunks
 
     def _extract_context(self, content: str) -> Tuple[str, str, str]:
