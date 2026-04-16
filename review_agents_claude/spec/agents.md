@@ -14,7 +14,17 @@ class FileScannerInput(BaseModel):
 ### 処理
 1. `{project_dir}/src/` ディレクトリが存在するか確認
 2. `pathlib.Path.rglob("*.java")` で再帰スキャン
-3. 結果をソートして返す
+3. `review_instruction.scope` に応じてファイルリストをフィルタリング（下記参照）
+4. 結果をソートして返す
+
+### スコープフィルタリング
+
+| scope | フィルタ処理 |
+|---|---|
+| `"full"` | フィルタなし（全ファイル） |
+| `"file"` | `Path(p).name` に `scope_target` が含まれるファイルのみ |
+| `"class"` | `Path(p).stem` に `scope_target` が含まれるファイルのみ（Javaの慣例: クラス名＝ファイル名） |
+| `"function"` | フィルタなし（スロット単位フィルタは Preprocessor 後に行う） |
 
 ### 出力
 ```python
@@ -63,6 +73,12 @@ class PreprocessorInput(BaseModel):
 // === Method ===
 {メソッド本体}
 ```
+
+### スロットフィルタリング（function スコープ時）
+
+`review_instruction.scope == "function"` かつ `scope_target` が指定されている場合：
+- 生成したスロットのうち `method_name == scope_target` のもののみをグラフに渡す
+- 一致スロットが0件の場合：`SkippedItem(reason="Parse Error", detail="No matching method found: {scope_target}")` を記録し空リストを返す
 
 ### 出力
 ```python

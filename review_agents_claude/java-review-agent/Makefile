@@ -21,11 +21,18 @@ install:  ## 本番依存のみインストール（dev グループ除く）
 # ────────────────────────────────────────────
 
 .PHONY: run
-run:  ## レビュー実行（例: make run TARGET=/path/to/java-project）
+run:  ## インタラクティブ起動（例: make run TARGET=/path/to/java-project）
 ifndef TARGET
 	$(error TARGET が指定されていません。例: make run TARGET=/path/to/java-project)
 endif
 	uv run java-review $(TARGET)
+
+.PHONY: run-full
+run-full:  ## 全ファイル・デフォルトエージェントで非インタラクティブ実行（例: make run-full TARGET=/path）
+ifndef TARGET
+	$(error TARGET が指定されていません)
+endif
+	uv run java-review $(TARGET) --no-interactive
 
 .PHONY: run-config
 run-config:  ## 設定ファイルを指定してレビュー実行（例: make run-config TARGET=/path CONFIG=./config.yaml）

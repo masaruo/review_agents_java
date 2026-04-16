@@ -5,7 +5,7 @@ class EfficiencyAnalyzer(BaseReviewAgent):
     def agent_name(self) -> str:
         return "Efficiency Analyzer"
 
-    def get_prompt(self, code: str, context: str) -> str:
+    def get_prompt(self, code: str, context: str, custom_instruction: str = "") -> str:
         return f"""You are a performance engineer specializing in Java.
 Analyze the following Java code (Java Version: {self.java_version}).
 
@@ -14,6 +14,9 @@ Context:
 
 Target Code:
 {code}
+
+[ADDITIONAL INSTRUCTION FROM USER]
+{custom_instruction}
 
 Focus on:
 - Inefficient algorithms or data structures

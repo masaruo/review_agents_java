@@ -8,8 +8,10 @@ from pydantic import ValidationError
 from java_review_agent.schemas.models import (
     CodeSlot,
     Config,
+    DEFAULT_AGENTS,
     OllamaConfig,
     ProcessingConfig,
+    ReviewInstruction,
     ReviewIssue,
     SkippedItem,
 )
@@ -163,6 +165,50 @@ class TestCodeSlot:
         )
         assert slot.method_name == "whole"
         assert slot.slot_id.endswith("::whole")
+
+
+class TestReviewInstruction:
+    def test_sch009_default_values(self) -> None:
+        """SCH-009: ReviewInstruction デフォルト値の確認"""
+        instr = ReviewInstruction()
+        assert instr.scope == "full"
+        assert instr.scope_target is None
+        assert instr.focus_question is None
+        assert set(instr.enabled_agents) == set(DEFAULT_AGENTS)
+
+    def test_sch010_invalid_scope(self) -> None:
+        """SCH-010: scope に不正な値は ValidationError"""
+        with pytest.raises(ValidationError):
+            ReviewInstruction(scope="all")  # type: ignore[arg-type]
+
+    def test_sch011_invalid_agent_name(self) -> None:
+        """SCH-011: enabled_agents に不正なエージェント名は ValidationError"""
+        with pytest.raises(ValidationError):
+            ReviewInstruction(enabled_agents=["unknown_agent"])  # type: ignore[arg-type]
+
+    def test_sch012_empty_enabled_agents(self) -> None:
+        """SCH-012: enabled_agents が空リストでも生成できる"""
+        instr = ReviewInstruction(enabled_agents=[])
+        assert instr.enabled_agents == []
+
+    def test_valid_scopes(self) -> None:
+        """全 scope 値が有効"""
+        for scope in ("full", "file", "class", "function"):
+            instr = ReviewInstruction(scope=scope)  # type: ignore[arg-type]
+            assert instr.scope == scope
+
+    def test_with_all_fields(self) -> None:
+        """全フィールド指定で正常生成"""
+        instr = ReviewInstruction(
+            scope="function",
+            scope_target="authenticate",
+            enabled_agents=["bug_detector", "security_scanner", "design_critic"],
+            focus_question="このメソッドの設計はどう思う？",
+        )
+        assert instr.scope == "function"
+        assert instr.scope_target == "authenticate"
+        assert "design_critic" in instr.enabled_agents
+        assert instr.focus_question == "このメソッドの設計はどう思う？"
 
 
 class TestConfig:

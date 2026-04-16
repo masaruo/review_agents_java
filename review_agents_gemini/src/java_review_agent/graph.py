@@ -26,6 +26,8 @@ def build_graph(config: Any, backend: Any):
     report_generator = FileReportGenerator(config.output_dir)
 
     def scanner_node(state: GraphState) -> Dict[str, Any]:
+        if state.get("files_to_process"):
+            return {}
         files = scan_java_files(state["project_dir"])
         return {"files_to_process": files}
 
@@ -59,7 +61,11 @@ def build_graph(config: Any, backend: Any):
             # 各専門エージェントをシリアルに呼び出し
             agents = [bug_detector, security_scanner, efficiency_analyzer, design_critic, style_reviewer]
             for agent in agents:
-                result = agent.review(slot["content"], slot["context"])
+                result = agent.review(
+                    slot["content"], 
+                    slot["context"], 
+                    custom_instruction=state.get("custom_instruction", "")
+                )
                 slot_data.results.append(result)
                 
                 if "skipped" in result.status:

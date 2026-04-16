@@ -10,7 +10,7 @@ class BaseReviewAgent(ABC):
         self.java_version = java_version
 
     @abstractmethod
-    def get_prompt(self, code: str, context: str) -> str:
+    def get_prompt(self, code: str, context: str, custom_instruction: str = "") -> str:
         pass
 
     @property
@@ -18,8 +18,8 @@ class BaseReviewAgent(ABC):
     def agent_name(self) -> str:
         pass
 
-    def review(self, code: str, context: str) -> ReviewResult:
-        prompt = self.get_prompt(code, context)
+    def review(self, code: str, context: str, custom_instruction: str = "") -> ReviewResult:
+        prompt = self.get_prompt(code, context, custom_instruction)
         try:
             response = self.backend.generate_json(self.model, prompt)
             items = [ReviewItem(**item) for item in response.get("items", [])]

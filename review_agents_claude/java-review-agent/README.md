@@ -87,10 +87,9 @@ make env
 
 ## 使い方
 
-### 基本的な使い方
+### 基本的な使い方（インタラクティブ起動）
 
 ```bash
-# プロジェクトディレクトリを指定してレビューを実行
 make run TARGET=/path/to/your/java-project
 ```
 
@@ -99,6 +98,39 @@ make run TARGET=/path/to/your/java-project
 ```bash
 uv run java-review /path/to/your/java-project
 ```
+
+起動後、3ステップのプロンプトでレビュー方針を指定します。
+
+```
+==================================================
+  Java Code Review Agent
+==================================================
+
+What would you like to review?
+  1. Full review (all files)
+  2. Specific file(s)  [e.g. "UserService.java"]
+  3. Specific class    [e.g. "UserService"]
+  4. Specific function [e.g. "authenticate"]
+Choice [1-4] (default: 1): 3
+Enter class name: UserService
+
+Which agents should run? (press Enter to keep defaults: bug, security)
+  [1] Bug Detector              (default: ON )
+  [2] Security Scanner          (default: ON )
+  [3] Efficiency Analyzer       (default: OFF)
+  [4] Design Critic             (default: OFF)
+  [5] Style Reviewer            (default: OFF)
+Enter numbers to toggle (e.g. '3 4'), or press Enter:
+
+Any specific question or focus? (optional, press Enter to skip)
+> 認証フローの設計はどう思う？
+```
+
+| ステップ | 内容 | デフォルト |
+|---|---|---|
+| レビュースコープ | 全ファイル / 特定ファイル / クラス / メソッド | 全ファイル |
+| 実行エージェント | 5つのエージェントからトグル選択 | Bug + Security のみ |
+| フォーカス質問 | サマリーに追記される自由記述（任意） | なし |
 
 **対象ディレクトリ**は `src/` を含むプロジェクトルートを指定します。
 
@@ -109,6 +141,16 @@ your-java-project/
         └── example/
             ├── Main.java
             └── Service.java
+```
+
+### インタラクティブプロンプトをスキップして実行
+
+```bash
+# 全ファイル・デフォルトエージェント（bug + security）で即実行
+make run-full TARGET=/path/to/java-project
+
+# または直接
+uv run java-review /path/to/java-project --no-interactive
 ```
 
 ### カスタム設定ファイルを指定する
@@ -123,8 +165,11 @@ uv run java-review /path/to/java-project --config ./config-production.yaml
 ### 実行例
 
 ```bash
-# サンプルプロジェクトをレビュー
+# インタラクティブ起動
 make run TARGET=~/projects/my-spring-app
+
+# 非インタラクティブで全ファイルレビュー
+make run-full TARGET=~/projects/my-spring-app
 
 # 別の設定ファイルを使用
 make run-config TARGET=~/projects/my-spring-app CONFIG=./config-production.yaml
@@ -251,7 +296,8 @@ make help           # コマンド一覧を表示
 |---|---|
 | `make all` / `make sync` | 依存パッケージを lockfile に従いインストール（開発用含む） |
 | `make install` | 本番依存のみインストール（dev グループ除く） |
-| `make run TARGET=<dir>` | レビューを実行 |
+| `make run TARGET=<dir>` | インタラクティブ起動でレビューを実行 |
+| `make run-full TARGET=<dir>` | プロンプトをスキップして全ファイル・デフォルトエージェントで実行 |
 | `make run-config TARGET=<dir> CONFIG=<yaml>` | 設定ファイルを指定してレビューを実行 |
 | `make test` | 全テストを実行 |
 | `make test-unit` | 単体テストのみ実行 |

@@ -67,6 +67,7 @@ class SummaryGeneratorAgent:
         java_version: int,
         project_dir: str,
         output_dir: str,
+        focus_question: str | None = None,
     ) -> str:
         """
         全ファイルのレビュー結果をもとにサマリーレポートを生成する。
@@ -79,12 +80,17 @@ class SummaryGeneratorAgent:
         total_issues = sum(r.issue_count for r in file_reports)
         issues_summary = _build_issues_summary(file_reports)
 
+        focus_section = (
+            f"\n\nUser's specific question/focus:\n{focus_question}"
+            if focus_question
+            else ""
+        )
         prompt = _PROMPT_TEMPLATE.format(
             java_version=java_version,
             issues_summary=issues_summary,
             total_files=total_files,
             total_issues=total_issues,
-        )
+        ) + focus_section
 
         try:
             llm_analysis = self.backend.generate(prompt)

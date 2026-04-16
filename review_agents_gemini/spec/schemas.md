@@ -50,6 +50,8 @@ class GraphState(TypedDict):
     current_slots: List[Dict[str, Any]]
     all_file_reviews: List[FileReviewData]
     skipped_items: List[Dict[str, Any]]
+    custom_instruction: Optional[str]
+    target_methods: List[str]
 ```
 
 ## 2. Aggregator スキーマ

@@ -4,6 +4,45 @@
 
 ---
 
+## 0. インタラクティブ指示モデル（★ 新規追加）
+
+```python
+from typing import Literal, Optional
+
+ScopeType = Literal["full", "file", "class", "function"]
+
+AgentNameType = Literal[
+    "bug_detector",
+    "security_scanner",
+    "efficiency_analyzer",
+    "design_critic",
+    "style_reviewer",
+]
+
+DEFAULT_AGENTS: list[AgentNameType] = ["bug_detector", "security_scanner"]
+
+
+class ReviewInstruction(BaseModel):
+    scope: ScopeType = "full"
+    # scope が "file"/"class"/"function" のとき有効。部分一致フィルタ
+    scope_target: Optional[str] = None
+    # 実行するエージェント名一覧（デフォルト: bug_detector, security_scanner）
+    enabled_agents: list[AgentNameType] = Field(default_factory=lambda: list(DEFAULT_AGENTS))
+    # ユーザーのフォーカス質問（Summary Generator のプロンプトに追記される）
+    focus_question: Optional[str] = None
+```
+
+### フィルタリング仕様
+
+| scope | scope_target の意味 | フィルタ対象 |
+|---|---|---|
+| `"full"` | 使用しない | 全 `.java` ファイル |
+| `"file"` | ファイル名の部分一致文字列 | `Path(p).name` が `scope_target` を含むファイル |
+| `"class"` | クラス名の部分一致文字列 | ファイル名が `scope_target` を含むファイル（Javaの慣例でクラス名=ファイル名） |
+| `"function"` | メソッド名の完全一致文字列 | Preprocessor が生成した `CodeSlot` の `method_name` が一致するスロットのみ処理 |
+
+---
+
 ## 1. 設定モデル
 
 ```python
@@ -136,6 +175,7 @@ class ReviewGraphState(TypedDict):
     project_dir: str
     java_version: int
     config: Config
+    review_instruction: ReviewInstruction  # ★ 追加: インタラクティブ指示
 
     # FileScanner 結果
     java_files: list[str]

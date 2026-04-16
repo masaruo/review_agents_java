@@ -5,7 +5,7 @@ class StyleReviewer(BaseReviewAgent):
     def agent_name(self) -> str:
         return "Style Reviewer"
 
-    def get_prompt(self, code: str, context: str) -> str:
+    def get_prompt(self, code: str, context: str, custom_instruction: str = "") -> str:
         return f"""You are a senior Java developer who values readability and clean code.
 Analyze the following Java code (Java Version: {self.java_version}).
 
@@ -14,6 +14,9 @@ Context:
 
 Target Code:
 {code}
+
+[ADDITIONAL INSTRUCTION FROM USER]
+{custom_instruction}
 
 Focus on:
 - General readability

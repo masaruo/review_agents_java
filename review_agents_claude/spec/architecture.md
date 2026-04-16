@@ -18,6 +18,42 @@
 |---|---|
 | 形式 | CLIコマンド引数でプロジェクトディレクトリパスを指定 |
 | スキャン対象 | 指定ディレクトリの `src/` 以下を再帰的にスキャンし、`.java` ファイルをすべて処理 |
+| インタラクティブ指示 | 起動時に対話的なプロンプトで「レビュースコープ」「実行エージェント」「フォーカス質問」を受け付ける |
+
+### インタラクティブ起動フロー
+
+プロジェクトディレクトリが有効であることを確認した後、以下の順で対話的に指示を受け取る：
+
+**Step 1 — レビュースコープの選択**
+```
+What would you like to review?
+  1. Full review (all files)
+  2. Specific file(s)  [enter filename pattern, e.g. "UserService.java"]
+  3. Specific class    [enter class name, e.g. "UserService"]
+  4. Specific function [enter function name, e.g. "authenticate"]
+Choice [1-4]:
+```
+
+スコープ 2〜4 を選択した場合は、対象名称の入力を促す。
+
+**Step 2 — 実行エージェントの選択**
+```
+Which agents should run? (press Enter to use defaults: bug, security)
+  [1] Bug Detector      (default: ON)
+  [2] Security Scanner  (default: ON)
+  [3] Efficiency Analyzer (default: OFF)
+  [4] Design Critic     (default: OFF)
+  [5] Style Reviewer    (default: OFF)
+Enter numbers to toggle (e.g. "3 4"), or press Enter to keep defaults:
+```
+
+**Step 3 — フォーカス質問（任意）**
+```
+Any specific question or focus? (optional, press Enter to skip)
+> 
+```
+
+入力例：`"この認証フローのアーキテクチャはどう思う？"` → Summary Generator のプロンプトに追加される。
 
 ### 出力
 
@@ -89,6 +125,7 @@
 class ReviewGraphState(TypedDict):
     project_dir: str                        # 入力プロジェクトディレクトリ
     java_version: int                       # Javaバージョン
+    review_instruction: ReviewInstruction   # ★ 追加: ユーザーのインタラクティブ指示
     java_files: list[str]                   # スキャン済み .java ファイルパス一覧
     current_file_index: int                 # 現在処理中のファイルインデックス
     current_file_path: str                  # 現在処理中のファイルパス

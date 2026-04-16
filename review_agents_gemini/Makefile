@@ -15,7 +15,7 @@ help:
 	@echo "  make typecheck  - Run mypy check"
 	@echo "  make all        - Run sync, lint, typecheck and test"
 	@echo "  make clean      - Remove venv, cache and output files"
-	@echo "  make run DIR=.. - Run the review agent (e.g., make run DIR=src/)"
+	@echo "  make run DIR=.. [FILES=\"f1 f2\"] [INST=\"msg\"] - Run the review agent"
 
 all: sync lint typecheck test
 
@@ -44,4 +44,6 @@ run:
 		echo "Error: DIR variable is required. Example: make run DIR=tests/fixtures/sample_java"; \
 		exit 1; \
 	fi
-	export PYTHONPATH=$(PYTHONPATH) && $(UV) run $(PYTHON) $(APP_MAIN) $(DIR)
+	export PYTHONPATH=$(PYTHONPATH) && $(UV) run $(PYTHON) $(APP_MAIN) $(DIR) \
+		$(if $(FILES),--files $(FILES)) \
+		$(if $(INST),--instruction "$(INST)")

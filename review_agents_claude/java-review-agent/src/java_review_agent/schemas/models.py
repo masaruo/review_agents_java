@@ -15,6 +15,33 @@ from pydantic import BaseModel, Field
 SeverityType = Literal["critical", "major", "minor", "info"]
 CategoryType = Literal["bug", "security", "efficiency", "design", "style"]
 SkipReasonType = Literal["Resource Limit", "Parse Error", "Connection Error"]
+ScopeType = Literal["full", "file", "class", "function"]
+AgentNameType = Literal[
+    "bug_detector",
+    "security_scanner",
+    "efficiency_analyzer",
+    "design_critic",
+    "style_reviewer",
+]
+
+DEFAULT_AGENTS: list[AgentNameType] = ["bug_detector", "security_scanner"]
+
+
+# ─────────────────────────────────────────────
+# インタラクティブ指示モデル
+# ─────────────────────────────────────────────
+
+
+class ReviewInstruction(BaseModel):
+    scope: ScopeType = "full"
+    scope_target: Optional[str] = None
+    """scope が "file"/"class"/"function" のとき有効。部分一致フィルタ。"""
+    enabled_agents: list[AgentNameType] = Field(
+        default_factory=lambda: list(DEFAULT_AGENTS)
+    )
+    """実行するエージェント名一覧"""
+    focus_question: Optional[str] = None
+    """Summary Generator のプロンプトに追記されるフリーテキスト質問"""
 
 
 # ─────────────────────────────────────────────
@@ -149,6 +176,7 @@ class ReviewGraphState(TypedDict, total=False):
     project_dir: str
     java_version: int
     config: Config
+    review_instruction: ReviewInstruction
 
     # FileScanner 結果
     java_files: list[str]

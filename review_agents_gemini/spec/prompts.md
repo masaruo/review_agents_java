@@ -5,6 +5,7 @@
 - `java_version`: Java バージョン（デフォルト: 17）
 - `file_content`: レビュー対象のコード
 - `context`: クラス名、インポート、メンバ変数などのメタデータ
+- `custom_instruction`: (Optional) ユーザーからの追加指示。
 
 ## 2. 各エージェントのプロンプト
 
@@ -18,6 +19,9 @@ Context:
 
 Target Code:
 {file_content}
+
+[ADDITIONAL INSTRUCTION FROM USER]
+{custom_instruction}
 
 Focus on:
 - NullPointerException
@@ -40,6 +44,9 @@ Context:
 Target Code:
 {file_content}
 
+[ADDITIONAL INSTRUCTION FROM USER]
+{custom_instruction}
+
 Focus on:
 - SQL/OS Injection
 - Improper authentication/authorization
@@ -60,6 +67,9 @@ Context:
 
 Target Code:
 {file_content}
+
+[ADDITIONAL INSTRUCTION FROM USER]
+{custom_instruction}
 
 Focus on:
 - Inefficient algorithms or data structures
@@ -82,6 +92,9 @@ Context:
 Target Code:
 {file_content}
 
+[ADDITIONAL INSTRUCTION FROM USER]
+{custom_instruction}
+
 Focus on:
 - SOLID principle violations
 - Improper use of design patterns
@@ -102,6 +115,9 @@ Context:
 
 Target Code:
 {file_content}
+
+[ADDITIONAL INSTRUCTION FROM USER]
+{custom_instruction}
 
 Focus on:
 - General readability

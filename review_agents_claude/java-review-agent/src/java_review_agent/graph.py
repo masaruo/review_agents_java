@@ -50,7 +50,10 @@ def build_graph(config: Config) -> Any:
     # ─── ノード定義 ───────────────────────────────────────────
 
     def node_file_scanner(state: ReviewGraphState) -> dict:
-        java_files = scan_java_files(state["project_dir"])
+        java_files = scan_java_files(
+            state["project_dir"],
+            instruction=state.get("review_instruction"),
+        )
         return {
             "java_files": java_files,
             "current_file_index": 0,
@@ -60,12 +63,36 @@ def build_graph(config: Config) -> Any:
         idx = state["current_file_index"]
         file_path = state["java_files"][idx]
         cfg = state["config"]
+        instruction = state.get("review_instruction")
 
         slots, skipped = preprocess_file(
             file_path=file_path,
             chunk_token_threshold=cfg.processing.chunk_token_threshold,
             max_input_tokens=cfg.processing.max_input_tokens,
         )
+
+        # function スコープ: 指定メソッド名のスロットのみに絞る
+        if (
+            instruction is not None
+            and instruction.scope == "function"
+            and instruction.scope_target
+        ):
+            target = instruction.scope_target
+            matched = [s for s in slots if s.method_name == target]
+            if not matched:
+                from java_review_agent.schemas.models import SkippedItem
+                from datetime import datetime, timezone
+
+                skipped = skipped + [
+                    SkippedItem(
+                        target=file_path,
+                        agent_name="preprocessor",
+                        reason="Parse Error",
+                        detail=f"No matching method found: {target}",
+                        timestamp=datetime.now(tz=timezone.utc),
+                    )
+                ]
+            slots = matched
 
         existing_skipped = list(state.get("skipped_items", []))
         return {
@@ -83,11 +110,19 @@ def build_graph(config: Config) -> Any:
         existing_outputs = list(state.get("slot_agent_outputs", []))
         existing_skipped = list(state.get("skipped_items", []))
 
+        instruction = state.get("review_instruction")
+        enabled_names: set[str] = (
+            set(instruction.enabled_agents)
+            if instruction is not None
+            else {a.agent_name for a in agents}
+        )
+        active_agents = [a for a in agents if a.agent_name in enabled_names]
+
         new_outputs = []
         new_skipped = []
 
         for slot in slots:
-            for agent in agents:
+            for agent in active_agents:
                 output, skipped_items = agent.review(slot, java_version)
                 new_outputs.append(output)
                 new_skipped.extend(skipped_items)
@@ -119,12 +154,14 @@ def build_graph(config: Config) -> Any:
 
     def node_summary(state: ReviewGraphState) -> dict:
         cfg = state["config"]
+        instruction = state.get("review_instruction")
         content = summary_agent.generate(
             file_reports=state["file_reports"],
             skipped_items=state.get("skipped_items", []),
             java_version=state["java_version"],
             project_dir=state["project_dir"],
             output_dir=cfg.output.dir,
+            focus_question=instruction.focus_question if instruction else None,
         )
         return {"summary_content": content}
 

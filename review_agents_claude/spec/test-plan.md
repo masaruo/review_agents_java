@@ -58,6 +58,11 @@ tests/
 | SCN-003 | `src/` ディレクトリが存在しない | 空リスト `[]`、STDERRに警告 |
 | SCN-004 | `src/` 配下にサブディレクトリがある | 再帰的にスキャンされる |
 | SCN-005 | `.java` 以外のファイル（`.kt`, `.xml` 等）が混在 | `.java` ファイルのみが返される |
+| SCN-006 | `scope="file"`, `scope_target="UserService"` | `UserService.java` を含むファイルのみ返される |
+| SCN-007 | `scope="class"`, `scope_target="UserService"` | `stem` が `UserService` を含むファイルのみ返される |
+| SCN-008 | `scope="function"` | ファイルフィルタなし（全ファイルが返される） |
+| SCN-009 | `scope="file"`, `scope_target` に一致するファイルなし | 空リスト `[]`、STDERRに警告 |
+| SCN-010 | `instruction=None` | フィルタなし・全ファイルが返される（後方互換） |
 
 ### 1.3 test_preprocessor.py — Preprocessorテスト（チャンキング）
 
@@ -110,6 +115,10 @@ tests/
 | SCH-006 | `SkippedItem` の `reason` が不正 | `ValidationError` |
 | SCH-007 | `CodeSlot` の正常生成 | 全フィールドが正しく設定される |
 | SCH-008 | `Config` デフォルト値の確認 | 全フィールドがデフォルト値 |
+| SCH-009 | `ReviewInstruction` デフォルト値 | `scope="full"`, `enabled_agents=["bug_detector","security_scanner"]`, `focus_question=None` |
+| SCH-010 | `ReviewInstruction.scope` に不正な値 | `ValidationError` |
+| SCH-011 | `ReviewInstruction.enabled_agents` に不正なエージェント名 | `ValidationError` |
+| SCH-012 | `ReviewInstruction.enabled_agents` が空リスト | 正常に生成される（バリデーションエラーなし） |
 
 ---
 
