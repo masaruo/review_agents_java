@@ -4,10 +4,11 @@ LangGraph と Ollama (`qwen2.5-coder:7b`) を活用した、Java コード専用
 
 ## 特徴
 
-- **マルチエージェント構成**: バグ検出、セキュリティ、効率性、設計、スタイルの 5 つの専門エージェントがコードを多角的に分析します。
+- **Web UI & Chat**: ブラウザ上でレビュー結果を確認し、AI と対話しながら修正案を相談可能。
+- **マルチエージェント構成**: バグ検出、セキュリティ、効率性、設計、スタイルの 5 つの専門エージェントがコードを多角的に分析。
 - **LangGraph による制御**: エージェント間の状態管理とワークフローを最適化。
-- **ローカル LLM 推論**: Ollama を使用し、プライベートな環境で高速に推論を実行します（シリアル実行制御により VRAM 消費を抑制）。
-- **大規模ファイル対応**: 1,000 トークンを超えるファイルは、メソッド単位に自動分割（チャンキング）して処理。
+- **ローカル LLM 推論**: Ollama を使用し、プライベートな環境で高速に推論を実行。
+- **大規模ファイル対応**: トークン数に応じてメソッド単位に自動分割（チャンキング）して処理。
 - **優先度付きレポート**: 指摘事項を重要度順に集約・ソートし、重複を除去した Markdown レポートを生成。
 
 ## 動作要件
@@ -28,30 +29,37 @@ ollama pull qwen2.5-coder:7b
 
 ### 2. インストール
 
-`uv` を使用して仮想環境の作成と依存関係のインストールを行います。
+`uv` を使用して依存関係をインストールします。
 
 ```bash
-uv venv
-uv pip install -e ".[dev]"
+make sync
 ```
 
 ## 使い方
 
-### レビューの実行
+### Web UI モード (推奨)
 
-対象の Java プロジェクトが含まれるディレクトリを指定して実行します。
+ブラウザ上でレビュー結果を確認し、AI と対話しながらコード修正の相談ができます。
 
 ```bash
-export PYTHONPATH=$PYTHONPATH:$(pwd)/src
-uv run python3 src/java_review_agent/main.py <対象ディレクトリへのパス>
+make ui
+```
+起動後、ブラウザで `http://localhost:8501` にアクセスしてください。サイドバーから対象ディレクトリを指定して「Start Review」をクリックします。
+
+### CLI モード
+
+一括でレポートファイルを生成する場合に使用します。
+
+```bash
+make run DIR=<対象ディレクトリへのパス>
 ```
 
-### 出力結果
+または直接スクリプトを実行します。
 
-レビュー結果は `./review_output/` ディレクトリに生成されます。
-
-- `{ファイル名}.md`: 各ファイルごとの詳細レポート
-- `summary.md`: プロジェクト全体のサマリーとスキップされた項目のログ
+```bash
+export PYTHONPATH=$(pwd)/src
+uv run python3 src/java_review_agent/main.py <対象ディレクトリへのパス>
+```
 
 ## 設定
 
@@ -62,7 +70,6 @@ java_version: 17
 ollama:
   base_url: "http://localhost:11434"
   model: "qwen2.5-coder:7b"
-  timeout_seconds: 120
 processing:
   max_concurrency: 1
   chunk_token_threshold: 1000  # この値を超えるとメソッド単位で分割
@@ -72,19 +79,13 @@ output:
 
 ## 開発とテスト
 
-### テストの実行
+### 便利コマンド (Makefile)
 
-```bash
-export PYTHONPATH=$PYTHONPATH:$(pwd)/src
-uv run pytest
-```
-
-### 静的解析 (Lint/Type Check)
-
-```bash
-uv run ruff check .
-uv run mypy src
-```
+- `make sync`: 依存関係の同期
+- `make test`: テストの実行
+- `make lint`: Ruff による静的解析
+- `make typecheck`: Mypy による型チェック
+- `make clean`: キャッシュや出力ファイルの削除
 
 ## アーキテクチャ
 
@@ -93,3 +94,4 @@ uv run mypy src
 3. **Reviewers**: 5 つのエージェントによるシリアル推論。
 4. **Aggregator**: 重複除去と優先度ベースの統合。
 5. **Generators**: レポートおよびサマリーの Markdown 出力。
+6. **Web UI**: Streamlit によるブラウザインターフェースと対話機能。

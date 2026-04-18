@@ -38,3 +38,7 @@ class AppConfig(BaseModel):
     ollama: OllamaConfig
     processing: ProcessingConfig
     output_dir: str
+
+class ChatMessage(BaseModel):
+    role: str  # user, assistant
+    content: str

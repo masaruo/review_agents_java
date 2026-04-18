@@ -5,7 +5,7 @@ PYTHON := python3
 APP_MAIN := src/java_review_agent/main.py
 OUTPUT_DIR := review_output
 
-.PHONY: help all sync clean test lint typecheck run
+.PHONY: help all sync clean test lint typecheck run ui
 
 help:
 	@echo "Usage:"
@@ -15,7 +15,8 @@ help:
 	@echo "  make typecheck  - Run mypy check"
 	@echo "  make all        - Run sync, lint, typecheck and test"
 	@echo "  make clean      - Remove venv, cache and output files"
-	@echo "  make run DIR=.. [FILES=\"f1 f2\"] [INST=\"msg\"] - Run the review agent"
+	@echo "  make run DIR=.. [FILES=\"f1 f2\"] [INST=\"msg\"] - Run the review agent (CLI mode)"
+	@echo "  make ui         - Run the review agent (Web UI mode via Streamlit)"
 
 all: sync lint typecheck test
 
@@ -47,3 +48,6 @@ run:
 	export PYTHONPATH=$(PYTHONPATH) && $(UV) run $(PYTHON) $(APP_MAIN) $(DIR) \
 		$(if $(FILES),--files $(FILES)) \
 		$(if $(INST),--instruction "$(INST)")
+
+ui:
+	export PYTHONPATH=$(PYTHONPATH) && $(UV) run streamlit run src/java_review_agent/ui.py

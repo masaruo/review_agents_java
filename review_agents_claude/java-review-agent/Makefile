@@ -44,6 +44,14 @@ ifndef CONFIG
 endif
 	uv run java-review $(TARGET) --config $(CONFIG)
 
+.PHONY: serve
+serve:  ## Web UI サーバーを起動（http://localhost:8000）
+	uv run uvicorn java_review_agent.server:app --host 0.0.0.0 --port 8000
+
+.PHONY: serve-reload
+serve-reload:  ## Web UI サーバーを開発モード（ホットリロード）で起動
+	uv run uvicorn java_review_agent.server:app --host 0.0.0.0 --port 8000 --reload
+
 # ────────────────────────────────────────────
 # テスト
 # ────────────────────────────────────────────

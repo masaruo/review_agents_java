@@ -10,6 +10,8 @@ LangGraph + Ollama (`qwen2.5-coder:7b`) を使用したローカルLLMによるJ
 - [必要な環境](#必要な環境)
 - [セットアップ](#セットアップ)
 - [使い方](#使い方)
+  - [Web UI（ブラウザ）](#web-uiブラウザ)
+  - [CLI](#基本的な使い方インタラクティブ起動)
 - [出力例](#出力例)
 - [設定](#設定)
 - [テストの実行](#テストの実行)
@@ -86,6 +88,27 @@ make env
 ---
 
 ## 使い方
+
+### Web UI（ブラウザ）
+
+ブラウザ上でレビューの設定・実行・追加質問をすべて行えます。
+
+```bash
+# Web UI サーバーを起動
+make serve
+```
+
+`http://localhost:8000` をブラウザで開きます。
+
+#### 操作フロー
+
+1. **左ペイン**でプロジェクトディレクトリ・スコープ・エージェントを設定し「レビュー開始」をクリック
+2. **右ペイン上段**にレビュー結果がタブ形式で表示される
+3. **右ペイン下段**のチャット欄でレビュー結果に関する追加質問を入力
+
+> 開発中はホットリロード付き `make serve-reload` が便利です。
+
+---
 
 ### 基本的な使い方（インタラクティブ起動）
 
@@ -296,6 +319,8 @@ make help           # コマンド一覧を表示
 |---|---|
 | `make all` / `make sync` | 依存パッケージを lockfile に従いインストール（開発用含む） |
 | `make install` | 本番依存のみインストール（dev グループ除く） |
+| `make serve` | Web UI サーバーを起動（http://localhost:8000） |
+| `make serve-reload` | Web UI サーバーを開発モード（ホットリロード）で起動 |
 | `make run TARGET=<dir>` | インタラクティブ起動でレビューを実行 |
 | `make run-full TARGET=<dir>` | プロンプトをスキップして全ファイル・デフォルトエージェントで実行 |
 | `make run-config TARGET=<dir> CONFIG=<yaml>` | 設定ファイルを指定してレビューを実行 |
@@ -333,9 +358,13 @@ java-review-agent/
 │   ├── prompts.md                    # プロンプトテンプレート
 │   ├── schemas.md                    # Pydanticスキーマ定義
 │   └── test-plan.md                  # テスト計画
+├── static/
+│   └── index.html                    # Web UI（シングルページ）
 ├── src/
 │   └── java_review_agent/
 │       ├── main.py                   # CLIエントリポイント
+│       ├── server.py                 # FastAPI Web UIサーバー
+│       ├── chat.py                   # 追加質問チャットハンドラ
 │       ├── graph.py                  # LangGraphグラフ定義
 │       ├── state.py                  # グラフ状態初期化
 │       ├── scanner.py                # .java ファイルスキャン

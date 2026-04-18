@@ -72,9 +72,31 @@ class ProcessingConfig(BaseModel):
     max_input_tokens: int
     response_reserve_tokens: int
 
+### AppConfig(BaseModel)
+```python
 class AppConfig(BaseModel):
     java_version: int
     ollama: OllamaConfig
     processing: ProcessingConfig
     output_dir: str
+```
+
+## 4. Web UI スキーマ
+
+### ChatMessage
+チャット履歴の1つのメッセージ。
+```python
+class ChatMessage(BaseModel):
+    role: str  # user, assistant
+    content: str
+```
+
+### WebSessionState
+Streamlit の `st.session_state` で管理するオブジェクト。
+```python
+class WebSessionState(BaseModel):
+    project_dir: str = ""
+    last_review: Optional[List[FileReviewData]] = None
+    chat_history: List[ChatMessage] = []
+    is_processing: bool = False
 ```

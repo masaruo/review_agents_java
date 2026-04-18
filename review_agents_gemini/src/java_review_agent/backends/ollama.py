@@ -28,3 +28,27 @@ class OllamaBackend:
         except Exception as e:
             # エラー発生時は呼び出し元で処理（Skipped 記録）
             raise e
+
+    def generate(self, model: str, prompt: str) -> str:
+        """単純なテキスト生成（チャットではなく単発の質問用）。"""
+        try:
+            response = self.client.generate(
+                model=model,
+                prompt=prompt,
+                options={"temperature": 0.7}
+            )
+            return response["response"]
+        except Exception as e:
+            raise e
+
+    def chat(self, model: str, messages: list) -> str:
+        """メッセージ履歴（role, content）を考慮したチャット。"""
+        try:
+            response = self.client.chat(
+                model=model,
+                messages=messages,
+                options={"temperature": 0.7}
+            )
+            return response["message"]["content"]
+        except Exception as e:
+            raise e
