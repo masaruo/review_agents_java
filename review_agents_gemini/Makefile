@@ -1,5 +1,5 @@
 # Variables
-PYTHONPATH := src
+PYTHONPATH := .
 UV := uv
 PYTHON := python3
 APP_MAIN := src/java_review_agent/main.py

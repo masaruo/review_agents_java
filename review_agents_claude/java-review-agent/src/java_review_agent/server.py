@@ -56,7 +56,7 @@ class ChatRequest(BaseModel):
 app = FastAPI(title="Java Code Review Agent")
 
 # static ディレクトリをマウント（index.html を配信）
-_static_dir = Path(__file__).parent.parent.parent.parent / "static"
+_static_dir = Path(__file__).parent.parent.parent / "static"
 if _static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
