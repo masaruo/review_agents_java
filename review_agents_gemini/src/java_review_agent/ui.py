@@ -85,7 +85,30 @@ def main():
     # サイドバー: 設定
     with st.sidebar:
         st.header("Settings")
-        project_dir = st.text_input("Project Directory Path", value=os.getcwd())
+        
+        # ディレクトリ・ナビゲーター
+        st.subheader("📁 Project Selector")
+        if "nav_path" not in st.session_state:
+            st.session_state.nav_path = os.getcwd()
+
+        # 上の階層へ
+        if st.button("⬅️ Up"):
+            st.session_state.nav_path = os.path.dirname(st.session_state.nav_path)
+            st.rerun()
+
+        # サブフォルダのリストを取得
+        try:
+            subdirs = sorted([d.name for d in os.scandir(st.session_state.nav_path) if d.is_dir() and not d.name.startswith('.')])
+        except Exception:
+            subdirs = []
+        
+        selected_sub = st.selectbox("Go into folder:", [""] + subdirs)
+        if selected_sub:
+            st.session_state.nav_path = os.path.join(st.session_state.nav_path, selected_sub)
+            st.rerun()
+
+        project_dir = st.text_input("Selected Path", value=st.session_state.nav_path)
+        
         custom_instruction = st.text_area("Custom Instruction (Optional)", 
                                           placeholder="e.g., Focus on security vulnerabilities in JPA queries.")
         

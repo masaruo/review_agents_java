@@ -21,6 +21,7 @@
 
 ```
 [ブラウザ]
+  ├── GET  /browse?path=<dir> → ディレクトリ一覧取得（ディレクトリピッカー用）
   ├── POST /review      → レビュー実行（既存グラフを呼び出し）
   ├── GET  /review/{id} → レビュー結果取得
   └── POST /chat/{id}   → 追加質問（会話継続、SSEストリーミング）
@@ -49,6 +50,27 @@ java-review-agent/
 ---
 
 ## 5. APIエンドポイント仕様
+
+### GET /browse
+サーバー側のディレクトリ一覧を返す（ディレクトリピッカーUI用）。
+
+**クエリパラメータ**
+- `path`（省略時はホームディレクトリ）
+
+**レスポンス**
+```json
+{
+  "current": "/Users/foo/projects",
+  "parent": "/Users/foo",
+  "entries": [
+    {"name": "my-app", "path": "/Users/foo/projects/my-app", "is_dir": true},
+    {"name": "other",  "path": "/Users/foo/projects/other",  "is_dir": true}
+  ]
+}
+```
+ディレクトリのみ返す（ファイルは除外）。
+
+---
 
 ### POST /review
 レビューを開始する。バックグラウンドタスクとして実行。
@@ -136,6 +158,14 @@ Ollamaへ送るプロンプト（チャット形式）：
   - 左ペイン：レビュー設定フォーム（project_dir, scope, agents, focus_question）
   - 右ペイン上段：レビュー結果表示（Markdown→プレーンテキスト）
   - 右ペイン下段：チャット入力欄 + 会話履歴
+
+### ディレクトリピッカー
+
+- project_dir 入力欄の右に「参照」ボタンを配置
+- クリックするとモーダルが開き、`GET /browse` でサーバー側のディレクトリを表示
+- 現在のパスをパンくずリスト形式で表示
+- ディレクトリ名をクリックすると下位ディレクトリへ移動
+- 「このディレクトリを選択」ボタンで確定 → project_dir 入力欄に反映してモーダルを閉じる
 
 ---
 

@@ -312,33 +312,65 @@ uv run pytest tests/unit/test_preprocessor.py -v
 ## Makefile コマンド一覧
 
 ```bash
-make help           # コマンド一覧を表示
+make        # または make help — 全コマンドの一覧を表示（デフォルト）
 ```
 
-| コマンド | 説明 |
-|---|---|
-| `make all` / `make sync` | 依存パッケージを lockfile に従いインストール（開発用含む） |
-| `make install` | 本番依存のみインストール（dev グループ除く） |
-| `make serve` | Web UI サーバーを起動（http://localhost:8000） |
-| `make serve-reload` | Web UI サーバーを開発モード（ホットリロード）で起動 |
-| `make run TARGET=<dir>` | インタラクティブ起動でレビューを実行 |
-| `make run-full TARGET=<dir>` | プロンプトをスキップして全ファイル・デフォルトエージェントで実行 |
-| `make run-config TARGET=<dir> CONFIG=<yaml>` | 設定ファイルを指定してレビューを実行 |
-| `make test` | 全テストを実行 |
-| `make test-unit` | 単体テストのみ実行 |
-| `make test-integration` | 統合テストのみ実行（Ollama不要） |
-| `make test-cov` | カバレッジ付きでテストを実行 |
-| `make lint` | ruff で静的解析 |
-| `make fmt` | ruff で自動フォーマット |
-| `make fmt-check` | フォーマット確認のみ（変更しない） |
-| `make typecheck` | mypy で型チェック |
-| `make check` | lint + fmt-check + typecheck をまとめて実行 |
-| `make clean` | キャッシュ・ビルド成果物を削除 |
-| `make clean-output` | `review_output/` 以下のレポートを削除 |
-| `make clean-all` | キャッシュ＋レポートをまとめて削除 |
-| `make ollama-check` | Ollama の起動状態を確認 |
-| `make ollama-pull` | `qwen2.5-coder:7b` をダウンロード |
-| `make env` | `.env.example` を `.env` にコピー |
+### セットアップ
+
+```bash
+make sync           # 依存パッケージを lockfile に従いインストール（開発用含む）
+make install        # 本番依存のみインストール（dev グループ除く）
+make env            # .env.example を .env にコピー（既存の .env は上書きしない）
+```
+
+### 実行（Web UI）
+
+```bash
+make serve                          # Web UIサーバーを起動 → http://localhost:8000
+make serve-reload                   # 開発モード（ホットリロード付き）で起動
+```
+
+### 実行（CLI）
+
+```bash
+make run TARGET=/path/to/project           # インタラクティブ起動（スコープ・エージェントを対話選択）
+make run-full TARGET=/path/to/project      # 全ファイル・デフォルトエージェント（bug+security）で即実行
+make run-config TARGET=/path CONFIG=./my.yaml   # カスタム設定ファイルを指定して実行
+```
+
+### テスト
+
+```bash
+make test               # 全テストを実行
+make test-unit          # 単体テストのみ実行
+make test-integration   # 統合テストのみ実行（Ollama不要・モック使用）
+make test-cov           # カバレッジ付きで実行（ターミナルにカバレッジ率を表示）
+```
+
+### コード品質
+
+```bash
+make lint               # ruff で静的解析
+make fmt                # ruff で自動フォーマット（ファイルを変更する）
+make fmt-check          # フォーマットの確認のみ（ファイルを変更しない）
+make typecheck          # mypy で型チェック
+make check              # lint + fmt-check + typecheck をまとめて実行（CI向け）
+```
+
+### クリーンアップ
+
+```bash
+make clean              # __pycache__ / .pytest_cache / .mypy_cache 等を削除
+make clean-output       # review_output/*.md を削除
+make clean-all          # clean + clean-output をまとめて実行
+```
+
+### Ollama ユーティリティ
+
+```bash
+make ollama-check       # Ollama の起動状態を確認
+make ollama-pull        # qwen2.5-coder:7b モデルをダウンロード（約4.7GB）
+```
 
 ---
 
