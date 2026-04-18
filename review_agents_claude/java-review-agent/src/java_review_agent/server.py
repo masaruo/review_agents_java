@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 from typing import AsyncGenerator, Literal, Optional
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -59,6 +59,31 @@ app = FastAPI(title="Java Code Review Agent")
 _static_dir = Path(__file__).parent.parent.parent / "static"
 if _static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
+
+@app.get("/browse")
+async def browse_directory(path: str = Query(default="")) -> dict:
+    """サーバー側のディレクトリ一覧を返す（ディレクトリピッカー用）"""
+    target = Path(path).expanduser() if path else Path.home()
+    target = target.resolve()
+
+    if not target.exists() or not target.is_dir():
+        raise HTTPException(status_code=400, detail=f"Directory not found: {target}")
+
+    try:
+        entries = sorted(
+            [
+                {"name": p.name, "path": str(p), "is_dir": p.is_dir()}
+                for p in target.iterdir()
+                if p.is_dir() and not p.name.startswith(".")
+            ],
+            key=lambda e: e["name"].lower(),
+        )
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Permission denied")
+
+    parent = str(target.parent) if target != target.parent else None
+    return {"current": str(target), "parent": parent, "entries": entries}
 
 
 @app.get("/", response_class=HTMLResponse)
